@@ -1,0 +1,63 @@
+Tables:
+
+1. pings
+- astrologer_id
+- ping_time
+- user_id
+
+2. converted_chats - rows in this table are inserted right when new converted chat starts. 
+                     No further row updates are necessary.
+- chat_id
+- astrologer_id
+- user_id
+- session_start
+- user_type: user's type(new, your client, new client) right before he started the chat.
+
+3. converted_chats_info - rows in this table are inserted when the converted chat finishes.
+                          No further row updates are necessary.
+- chat_id
+- session_duration
+- session_profit
+
+I assume there is some mechanism which determines if chat was started because of ping. 
+For example, it could be 'source' attribute. The user sees the ping pop-up, taps on it, and starts the chat. 
+Backend will automatically assign to such chat the attribute 'source' with value 'ping'.
+
+If there is no such mechanism, we could establish our own rule.
+For example, we can say than user converted from ping to chat, 
+if session start time is within 5 minutes of the ping time.
+
+
+Analysts queries:
+
+1) Активність астрологів і чи дійсно вони користуються цим функціоналом;
+
+select astrologer_id, count(*) as num_pings
+from pings
+group by astrologer_id
+
+2) Кількість пінгів;
+
+select count(*) as all_pings from pings;
+
+or
+
+select 
+astrloger_id, count(*) as all_pings 
+from pings
+group by astrloger_id;
+
+3) Конверсія з пінга в чат;
+
+select (select count(*) from converted_chats) / (select count(*) from pings) 
+
+4) Довжина таких чатів та дохід з них;
+
+select chat_id, session_duration, session_profit
+from converted_chats_info
+
+5) Статистика по тому які користувачі краще конвертуються (які вже чатились, чи ті що не чатились до того).
+
+select user_type, count(*)
+from converted_chats
+group by user_type
